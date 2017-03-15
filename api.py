@@ -57,7 +57,7 @@ def _template(cls):
     def create_variable(obj=-1, name=None, parent=None):
 
         try:
-            f = _w.lof[_w.index(obj._obj)]
+            f = _w.lof[_w.index(obj._index)]
         except AttributeError:
             f = _w.lof[_w.index(obj)]
 

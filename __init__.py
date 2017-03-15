@@ -33,7 +33,8 @@ class HDF5Files:
 
     def __repr__(self):
         return '\n'.join(
-            '{:2d}) {}'.format(i, repr(f)) for i, f in enumerate(lof))
+            '{:2d}) {}'.format(i, repr(f).replace('<', '').replace('>', ''))
+            for i, f in enumerate(lof))
 
 
 class Variables:
@@ -127,7 +128,7 @@ def index(obj):
 def link(group, parent=None):
 
     if parent:
-        parent = get(group, False)
+        parent = get(parent, False)
 
     name = unify_name(group.name[1:])
 
@@ -227,10 +228,16 @@ class Group:
             self.group.create_dataset(name, data=value)
 
     def __repr__(self):
-        return 'Variable {} {} from {}'.format(
-            get(self.group),
-            '(' + get(self.parent.group) + ')' if self.parent else '(-)',
-            repr(self.group.file))
+        if isinstance(self, Variable):
+            return 'Variable {} {} from {} in {}'.format(
+                get(self.group),
+                '(' + get(self.parent.group) + ')' if self.parent else '(-)',
+                repr(self.group).replace('<', '').replace('>', ''),
+                repr(self.group.file).replace('<', '').replace('>', ''))
+        else:
+            return '{} in {}'.format(
+                repr(self.group).replace('<', '').replace('>', ''),
+                repr(self.group.file).replace('<', '').replace('>', ''))
 
 
 class Variable(Group):

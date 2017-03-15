@@ -1,3 +1,3 @@
 from . import basic
 
-variables = [basic.Basic]
+list_of_variables = [basic.Basic]
