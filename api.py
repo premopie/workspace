@@ -1,6 +1,9 @@
 import datetime as _d
 import workspace as _w
 
+hdf5_files = _w.HDF5Files()
+variables = _w.Variables()
+
 
 def add(filename, mode='a'):
 
@@ -10,19 +13,20 @@ def add(filename, mode='a'):
     # Ponowne otwarcie uprzednio otwartego pliku nie generuje
     # błędu
     f = _w.h5py.File(filename, mode)
-    # Usuń i dodaj aby elementy listy pool występowały w
+    # Usuń i dodaj aby elementy listy lof występowały w
     # kolejności dodawania plików do zasobów
-    if f in _w.pool:
-        _w.pool.remove(f)
-    _w.pool.append(f)
+    if f in _w.lof:
+        _w.lof.remove(f)
+    _w.lof.append(f)
 
     _w.update()
 
 
 def clear():
-    for f in _w.pool:
+
+    for f in _w.lof:
         f.close()
-    _w.pool.clear()
+    _w.lof.clear()
     _w.update()
 
 
@@ -36,7 +40,7 @@ def close(obj=-1):
     dowiązania do obiektów z usuwanego zasobu i zamknij plik.
 
     """
-    _w.pool.pop(_w.index(obj)).close()
+    _w.lof.pop(_w.index(obj)).close()
     _w.update()
 
 
@@ -45,27 +49,7 @@ def close(obj=-1):
 # polecenie h5py.File.flush()
 # http://stackoverflow.com/questions/31287744/corrupt-files-when-creating-hdf5-files-without-closing-them-h5py
 def flush(obj=-1):
-    _w.pool[_w.index(obj)].flush()
-
-
-def list_files():
-    print('\n'.join('{:2d}) {}\t {}'.format(i, f.filename, f.mode)
-                    for i, f in enumerate(_w.pool)))
-
-
-def list_variables():
-    print('\n'.join('{:2d}) {} {} in {}'.format(i, l[0], p, l[1])
-                    for i, l, p in
-                    zip(range(len(_w.links)), _w.links,
-                        (
-
-                            '(' + getattr(_w.interactive_namespace,
-                                          l[0]).parent.group.name[1:] + ')'
-                            if
-                            getattr(_w.interactive_namespace, l[0]).parent
-                            else '(-)' for l in _w.links
-
-                        ))))
+    _w.lof[_w.index(obj)].flush()
 
 
 def _template(cls):
@@ -73,9 +57,9 @@ def _template(cls):
     def create_variable(obj=-1, name=None, parent=None):
 
         try:
-            f = _w.pool[_w.index(obj._obj)]
+            f = _w.lof[_w.index(obj._obj)]
         except AttributeError:
-            f = _w.pool[_w.index(obj)]
+            f = _w.lof[_w.index(obj)]
 
         if not name:
             name = cls.__name__.lower()[0] + str(
@@ -85,7 +69,10 @@ def _template(cls):
 
         _w.update()
 
+        return getattr(_w.interactive_namespace, name)
+
     return create_variable
 
-for _cls in _w.variables:
+
+for _cls in _w.list_of_variables:
     vars()[_w.create_fcn_name(_cls)] = _template(_cls)
