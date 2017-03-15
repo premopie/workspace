@@ -52,21 +52,6 @@ class Variables:
             '{:2d}) {}'.format(i, repr(getattr(interactive_namespace, v)))
             for i, v in enumerate(lov))
 
-# class Variables:
-#     '''Variables is a collection of Variable instances located in the
-#     interactive_namespace.
-
-#     '''
-#     def __getitem__(self, index):
-#         return lov[index]
-
-#     def __iter__(self):
-#         return iter(lov)
-
-#     def __repr__(self):
-#         return '\n'.join(
-#             '{:2d}) {}'.format(i, repr(var)) for i, var in enumerate(lov))
-
 
 def create_fcn_name(cls):
     return 'create_' + cls.__name__.lower()
@@ -138,19 +123,6 @@ def index(obj):
         raise IndexError(
             "There is no HDF5 file associated with index {}!".format(index))
 
-
-# def link(group, parent=None):
-
-#     if parent:
-#         parent = getattr(interactive_namespace, parent.name[1:])
-
-#     setattr(interactive_namespace,
-#             group.name[1:],
-#             globals()[group.attrs['type']](group, parent))
-
-#     lov.append(getattr(interactive_namespace, group.name[1:]))
-
-#     return group
 
 def link(group, parent=None):
 
@@ -259,12 +231,6 @@ class Group:
             get(self.group),
             '(' + get(self.parent.group) + ')' if self.parent else '(-)',
             repr(self.group.file))
-
-    # def __repr__(self):
-    #     return 'Variable {} {} from {}'.format(
-    #         self.group.name[1:],
-    #         '(' + self.parent.group.name[1:] + ')' if self.parent else '(-)',
-    #         repr(self.group.file))
 
 
 class Variable(Group):
