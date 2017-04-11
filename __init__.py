@@ -1,5 +1,28 @@
-'''Przestrzeń roboczą tworzą pliki HDF5, których zawartość jest
-eksponowana w interaktywnej przestrzeni nazw ipython'a.'''
+'''
+Workspace: python module for handling HDF5 variables
+====================================================
+
+
+Main features
+-------------
+
+- Provides a set of tools for handling variables, i.e. objects being
+  instances of the ``Variable`` class.
+
+- Variables are created by default in the ``__main__`` module.
+
+- When running in IPython, variables are available through the
+  interactive namespace.
+
+- Each variable is paired with an associated HDF5 root group and
+  exposes convinient interface for it.
+
+- Created variables are stored in the HDF5 binary data format.
+
+- Explore variables using tab completion mechanism. For IPython it is
+  recommended to have greedy completion enabled.
+'''
+
 import hashlib
 import sys
 
@@ -11,20 +34,19 @@ from workspace.variables import list_of_variables
 
 # Interactive namespace
 interactive_namespace = sys.modules['__main__']
-# List of open HDF5 Files
+# List of open HDF5 files
 lof = []
-# List of variables created in the interactive namespace
-lov = []
+# List containing names of created variables
+lon = []
 
 # Hidden attributes
 hidden_attributes = ['group', 'parent', 'create']
 
 
 class HDF5Files:
-    '''HDF5Files is a collection of open HDF5 files which contributes to
-    workspace.
-
-    '''
+    """
+    Serves as an interface for list of open HDF5 files.
+    """
     def __getitem__(self, index):
         return lof[index]
 
@@ -38,20 +60,19 @@ class HDF5Files:
 
 
 class Variables:
-    '''Variables is a collection of Variable instances located in the
-    interactive_namespace.
-
+    '''
+    Serves as an interface for list of created variables.
     '''
     def __getitem__(self, index):
-        return getattr(interactive_namespace, lov[index])
+        return getattr(interactive_namespace, lon[index])
 
     def __iter__(self):
-        return (getattr(interactive_namespace, v) for v in lov)
+        return (getattr(interactive_namespace, v) for v in lon)
 
     def __repr__(self):
         return '\n'.join(
             '{:2d}) {}'.format(i, repr(getattr(interactive_namespace, v)))
-            for i, v in enumerate(lov))
+            for i, v in enumerate(lon))
 
 
 def create_fcn_name(cls):
@@ -92,7 +113,7 @@ def get(group, default=True):
     otherwise get variable itself, i.e. its instance.
 
     '''
-    for name in lov:
+    for name in lon:
         if group == getattr(interactive_namespace, name).group:
             return name if default else getattr(interactive_namespace, name)
     else:
@@ -135,7 +156,7 @@ def link(group, parent=None):
     setattr(interactive_namespace, name,
             globals()[group.attrs['type']](group, parent))
 
-    lov.append(name)
+    lon.append(name)
 
     return group
 
@@ -144,22 +165,14 @@ def unify_name(name):
     return name
 
 
-# I.  W Pythonie dla danego scope nazwy atrybutów są niepowtarzalne
-#     (nie można w tym samym czasie utworzyć dwóch różnych obiektów o
-#     tej samej nazwie). Zatem, do identyfikacji instancji klas
-#     Variable i jej pochodnych wykorzystane zostaną nazwy
-#     atrybutów.
-
-# II. Nie wolno utworzyć instancji o zadanym atrybucie, jeżeli atrybut
-#     ten został już utworzony wcześniej (do zmiany w przyszłości).
 def update():
 
     # Na wypadek, gdy dodano nowy zasób należy przebudować wszystkie grupy
-    for v in lov:
+    for v in lon:
         # Komendę "xdel" można zastąpić komendą "reset_selective",
         # która generuje prośbę o potwierdzenie.
         get_ipython().run_line_magic('xdel', v)
-    lov.clear()
+    lon.clear()
 
     # "G": lista wszystkich grup dostępnych w zasobach, tworząca
     #      graf zwany lasem
@@ -189,8 +202,6 @@ def update():
         C = C - P
 
 
-# Dataset nie powinien posiadać atrybutów, gdyż nie będą one dostępne
-# poprzez tradycyjną notację.
 class Group:
 
     def __init__(self, group, parent=None):

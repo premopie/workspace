@@ -7,7 +7,7 @@ variables = _w.Variables()
 
 def add(filename, mode='a'):
 
-    if mode == 'w':
+    if mode == 'w':                                         
         mode == 'w-'
 
     # Ponowne otwarcie uprzednio otwartego pliku nie generuje
@@ -44,10 +44,6 @@ def close(obj=-1):
     _w.update()
 
 
-# Metoda h5py.File.close() nie gwarantuje, że zawartość bufora
-# zostanie poprawnie zapisana. W tym celu należy wykonać dodatkowo
-# polecenie h5py.File.flush()
-# http://stackoverflow.com/questions/31287744/corrupt-files-when-creating-hdf5-files-without-closing-them-h5py
 def flush(obj=-1):
     _w.lof[_w.index(obj)].flush()
 
