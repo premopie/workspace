@@ -1,4 +1,4 @@
-'''
+"""
 Workspace: python module for handling HDF5 variables
 ====================================================
 
@@ -21,8 +21,7 @@ Main features
 
 - Explore variables using tab completion mechanism. For IPython it is
   recommended to have greedy completion enabled.
-'''
-
+"""
 import hashlib
 import sys
 
@@ -67,12 +66,12 @@ class Variables:
         return getattr(interactive_namespace, lon[index])
 
     def __iter__(self):
-        return (getattr(interactive_namespace, v) for v in lon)
+        return (getattr(interactive_namespace, name) for name in lon)
 
     def __repr__(self):
         return '\n'.join(
-            '{:2d}) {}'.format(i, repr(getattr(interactive_namespace, v)))
-            for i, v in enumerate(lon))
+            '{:2d}) {}'.format(i, repr(getattr(interactive_namespace, name)))
+            for i, name in enumerate(lon))
 
 
 def create_fcn_name(cls):
@@ -92,14 +91,16 @@ def fingerprint(obj=None):
         group = obj['data']
 
     d = bytes()
+
     keys = list(group)
     keys.sort()
-
     for key in keys:
         d += numpy.array(group[key]).tobytes()
 
     if hasattr(group, 'attrs'):
+
         keys = list(group.attrs)
+        keys.sort()
         for key in keys:
             d += numpy.array(group.attrs[key]).tobytes()
 
@@ -168,10 +169,14 @@ def unify_name(name):
 def update():
 
     # Na wypadek, gdy dodano nowy zasób należy przebudować wszystkie grupy
-    for v in lon:
-        # Komendę "xdel" można zastąpić komendą "reset_selective",
-        # która generuje prośbę o potwierdzenie.
-        get_ipython().run_line_magic('xdel', v)
+    try:
+        for name in lon:
+            # Komendę "xdel" można zastąpić komendą "reset_selective",
+            # która generuje prośbę o potwierdzenie.
+            get_ipython().run_line_magic('xdel', name)
+    except AttributeError:
+        for name in lon:
+            delattr(interactive_namespace, name)
     lon.clear()
 
     # "G": lista wszystkich grup dostępnych w zasobach, tworząca
