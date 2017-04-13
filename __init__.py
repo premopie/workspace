@@ -258,7 +258,10 @@ class Group:
 
 class Variable(Group):
 
-    '''Each instance of the Variable class is paired with an associated
+    '''
+    Notes
+    ------
+    Each instance of the Variable class is paired with an associated
     HDF5 *root group* and exposes convinient interface for it.
 
     '''
@@ -267,14 +270,44 @@ class Variable(Group):
 
     def remove(self):
         '''remove()
-
-        From HDF5 file remove group paired with this variable.
-
+        Removes associated HDF5 group.
+        Method called on specified variable in the workspace. 
+        
+        Examples
+        ---------
+        Add example variable (named "E") to the HDF5 file with index = 0 in the workspace::
+    
+        >>> <workspace_name>[0].create.basic("E")
+        
+        Remove "E", by calling remove() method on it::
+        
+        >>> E.remove()
         '''
+
         del(self.group.parent[self.group.name[1:]])
         update()
 
     def rename(self, name):
+        '''rename(name)
+        Renames associated HDF5 group.
+        Method called on specified variable in the workspace.
+        
+        Parameters
+        ----------
+        name : str
+            New name of the HDF5 group.
+    
+        Examples
+        ---------
+        Add example variable (named "E") to the HDF5 file with index = 0 in the workspace::
+    
+        >>> <workspace_name>[0].create.basic("E")
+        
+        Rename "E" to "Z", by calling rename() method on it::
+        
+        >>> E.rename("Z")
+        '''
+
         self.group.move(self.group.name, '/' + name)
         update()
 
