@@ -14,6 +14,9 @@ for cls in workspace.list_of_variables:
 
 
 class HDF5File:
+    """
+    Imports functions from api.py and serves as an interface for end user.
+    """
 
     def __init__(self, index):
         self._index = index
@@ -23,15 +26,27 @@ class HDF5File:
         return repr(workspace.api.hdf5_files[self._index])
 
     def close(self):
+        """
+        Alias of **api.close()**.
+        """
         workspace.api.close(self._index)
 
     def flush(self):
+        """
+        Alias of **api.flush()**.
+        """
         workspace.api.flush(self._index)
 
 
 class Interface:
+    """
+    Imports functions from api.py and serves as an interface for end user.
+
+    :Object: **vars**: List of all variables available in the interactive namespace.
+    """
 
     vars = workspace.api.variables
+
 
     def __repr__(self):
         return repr(workspace.api.hdf5_files)
@@ -43,7 +58,15 @@ class Interface:
         return iter(workspace.api.hdf5_files)
 
     def add(self, filename, mode='a'):
+        """
+        Alias of **api.add()**.
+        """
         workspace.api.add(filename, mode)
 
+
     def clear(self):
+        """
+        Alias of **api.clear()**.
+        """
         workspace.api.clear()
+

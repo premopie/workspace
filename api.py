@@ -1,13 +1,23 @@
+"""
+:Object: **variables**: List of all variables available in the interactive namespace.
+
+Instance of ``__init__.Variables``.
+
+:Object: **hdf5_files**: List of all HDF5 files available in the interactive namespace.
+
+Instance of ``__init__.HDF5Files``.
+
+"""
+
 import datetime as _d
 import workspace as _w
 
 hdf5_files = _w.HDF5Files()
 variables = _w.Variables()
 
-
 def add(filename, mode='a'):
     """
-    Creates a HDF5 file in the workspace.
+    Creates or opens a HDF5 file on the hard drive and adds it to the interactive namespace.
     
     Parameters
     ----------
@@ -30,18 +40,17 @@ def add(filename, mode='a'):
         
     Notes
     ------
-    Based on **h5py.File()**.
-    
-    Every HDF5 file is also a HDF5 group representing the root group of the file.
+    Based on ``h5py.File()``.
+    The root group is automatically created when the HDF5 file is created.
 
     Examples
     ---------
-    Add a sample file to the workspace::
+    Add a sample file to the interactive namespace::
     
-    >>> <workspace_name>.add("example.h5")
+    >>> <interface_name>.add("example.h5")
     """
 
-    if mode == 'w':
+    if mode == 'w':                                         
         mode == 'w-'
 
     # Ponowne otwarcie uprzednio otwartego pliku nie generuje
@@ -58,19 +67,19 @@ def add(filename, mode='a'):
 
 def clear():
     """
-    Removes all HDF5 files from the workspace.
+    Closes all open HDF5 files and removes them from the interactive namespace.
+    Files are not physically deleted form the hard drive, but rather deleted from current interactive namespace.
     
     Notes
     ------
-    Based on **h5py.File()**.
+    Based on ``h5py.File()``.
     
-    Files are not physically deleted form hard drive.
 
     Examples
     ---------
-    Clear current workspace::
+    Clears current interactive namespace::
 
-    >>> <workspace_name>.clear()
+    >>> <interface_name>.clear()
     """
 
     for f in _w.lof:
@@ -80,53 +89,52 @@ def clear():
 
 
 def close(obj=-1):
-    """close()
-    Closes selected HDF5 file and removes it from the workspace.
+    """close(obj=-1)
+    Closes HDF5 file with selected index and removes it from the interactive namespace.
+    The default index is minus one, which means the last item on the list of files.
     
     Notes
     ------
-    Based on **h5py.File()**.
+    Based on ``h5py.File()``.
     
-    This method does not guarantee that the file will be correctly saved. To ensure no data corruption, **HDF5File.flush()** should be called after **HDF5File.close()**.
+    This method does not guarantee that the file will be correctly saved. To ensure no data corruption, ``api.flush()`` should be called after ``api.close()``.
 
     Examples
     ---------
-    Add a sample file to the workspace::
+    Add a sample file to the interactive namespace::
     
-    >>> <workspace_name>.add("example.h5")
+    >>> <interface_name>.add("example.h5")
         
-    File *"example.h5"* is present in workspace with index 0. 
+    File *"example.h5"* is present in interactive namespace with index = -1. 
     
-    In order to close this file and remove from workspace we need to call *HDF5File.close()* method on *<workspace_name>[0]* object:: 
+    In order to close this file and remove from the interactive namespace we need to call ``api.close()`` method on ``<interface_name>[file_index]`` file object:: 
     
-    >>> <workspace_name>[0].close()
+    >>> <interface_name>[-1].close()
     """
-
+    
+    
     _w.lof.pop(_w.index(obj)).close()
     _w.update()
 
 
-# Metoda h5py.File.close() nie gwarantuje, że zawartość bufora
-# zostanie poprawnie zapisana. W tym celu należy wykonać dodatkowo
-# polecenie h5py.File.flush()
-# http://stackoverflow.com/questions/31287744/corrupt-files-when-creating-hdf5-files-without-closing-them-h5py
 def flush(obj=-1):
-    """flush()
-    Forces data in HDF5File to be copied from the memory buffer and saved on the hard drive.
+    """flush(obj=-1)
+    Forces data in HDF5 file to be copied from the memory buffer and saved on the hard drive.
+    The default index is minus one, which means the last item on the list of files.
     
     Notes
     ------
-    Based on **h5py.File()**.
+    Based on ``h5py.File()``.
     
     Examples
     ---------
     Close selected file::
         
-    >>> <workspace_name>[0].close()
+    >>> <interface_name>[file_index].close()
         
     Ensure that it's data is saved on the hard drive::
     
-    >>> <workspace_name>[0].flush()
+    >>> <interface_name>[file_index].flush()
     """
 
     _w.lof[_w.index(obj)].flush()

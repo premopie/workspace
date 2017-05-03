@@ -1,5 +1,3 @@
-'''Przestrzeń roboczą tworzą pliki HDF5, których zawartość jest
-eksponowana w interaktywnej przestrzeni nazw ipython'a.'''
 import hashlib
 import sys
 
@@ -8,23 +6,24 @@ import numpy
 from IPython import get_ipython
 
 from workspace.variables import list_of_variables
+import datetime as _d
+import workspace as _w
 
 # Interactive namespace
 interactive_namespace = sys.modules['__main__']
-# List of open HDF5 Files
+# List of open HDF5 files
 lof = []
-# List of variables created in the interactive namespace
-lov = []
+# List containing names of created variables
+lon = []
 
 # Hidden attributes
 hidden_attributes = ['group', 'parent', 'create']
 
 
 class HDF5Files:
-    '''HDF5Files is a collection of open HDF5 files which contributes to
-    workspace.
-
-    '''
+    """
+    Serves as an interface for list of open HDF5 files.
+    """
     def __getitem__(self, index):
         return lof[index]
 
@@ -38,20 +37,19 @@ class HDF5Files:
 
 
 class Variables:
-    '''Variables is a collection of Variable instances located in the
-    interactive_namespace.
-
-    '''
+    """
+    Serves as an interface for the list of created variables.
+    """
     def __getitem__(self, index):
-        return getattr(interactive_namespace, lov[index])
+        return getattr(interactive_namespace, lon[index])
 
     def __iter__(self):
-        return (getattr(interactive_namespace, v) for v in lov)
+        return (getattr(interactive_namespace, name) for name in lon)
 
     def __repr__(self):
         return '\n'.join(
-            '{:2d}) {}'.format(i, repr(getattr(interactive_namespace, v)))
-            for i, v in enumerate(lov))
+            '{:2d}) {}'.format(i, repr(getattr(interactive_namespace, name)))
+            for i, name in enumerate(lon))
 
 
 def create_fcn_name(cls):
@@ -59,6 +57,27 @@ def create_fcn_name(cls):
 
 
 def fingerprint(obj=None):
+    """
+    Generates 40B SHA1 digest from data of the specified object.
+    
+    Allowed object types:
+    
+    - HDF5 group
+    
+    - IVar class
+    
+    - None
+    
+    Parameters
+    ----------
+    obj : {None|Ivar class|HDF5 group}
+        Object available in the interactive namespace. 
+        
+    Returns
+    -------
+    **string**
+        40B SHA1 hexadecimal digest.
+    """
     # Są trzy możliwości:
     # a) obj to grupa hdf5
     # b) obj to klasa IVar
@@ -71,14 +90,16 @@ def fingerprint(obj=None):
         group = obj['data']
 
     d = bytes()
+
     keys = list(group)
     keys.sort()
-
     for key in keys:
         d += numpy.array(group[key]).tobytes()
 
     if hasattr(group, 'attrs'):
+
         keys = list(group.attrs)
+        keys.sort()
         for key in keys:
             d += numpy.array(group.attrs[key]).tobytes()
 
@@ -86,13 +107,24 @@ def fingerprint(obj=None):
 
 
 def get(group, default=True):
-    '''get(group, default=True)
-
+    """get(group, default=True)
+    
     By default get name of the variable associated with group,
     otherwise get variable itself, i.e. its instance.
-
-    '''
-    for name in lov:
+    
+    Parameters
+    ----------
+    group : obj
+        Specified HDF5 group.
+    default : bool
+        Indicates whether this method additionally returns instance of the variable associated with group.
+            
+    Returns
+    -------
+    name : string
+        Name of the variable associated with specified HDF5 group.
+    """
+    for name in lon:
         if group == getattr(interactive_namespace, name).group:
             return name if default else getattr(interactive_namespace, name)
     else:
@@ -100,14 +132,28 @@ def get(group, default=True):
 
 
 def index(obj):
-    '''index(obj)
+    """index(obj)
+    
+    Returns an index of the specified object(s).
+    
+    Allowed object types:
+    
+    - index or range of indexes (int or slice)
+    
+    - HDF5 file name (string)
+    
+    - h5py file object
 
-    Dopuszcza się następujące typy zmiennej obj:
-    - int lub slice, czyli indeks lub zakres indeksów z puli zasobów;
-    - str oznaczający nazwę zasobu (pliku) HDF 5;
-    - obiekt typu h5py file object.
-
-    '''
+    Parameters
+    ----------
+    obj : {int|slice|string|h5py file object}
+        Object available in the interactive namespace.
+        
+    Returns
+    -------
+    index : int
+        Index of specified object.
+    """
     if type(obj) is int or type(obj) is slice:
         index = obj
     elif type(obj) is h5py._hl.files.File:
@@ -135,7 +181,7 @@ def link(group, parent=None):
     setattr(interactive_namespace, name,
             globals()[group.attrs['type']](group, parent))
 
-    lov.append(name)
+    lon.append(name)
 
     return group
 
@@ -144,22 +190,18 @@ def unify_name(name):
     return name
 
 
-# I.  W Pythonie dla danego scope nazwy atrybutów są niepowtarzalne
-#     (nie można w tym samym czasie utworzyć dwóch różnych obiektów o
-#     tej samej nazwie). Zatem, do identyfikacji instancji klas
-#     Variable i jej pochodnych wykorzystane zostaną nazwy
-#     atrybutów.
-
-# II. Nie wolno utworzyć instancji o zadanym atrybucie, jeżeli atrybut
-#     ten został już utworzony wcześniej (do zmiany w przyszłości).
 def update():
 
     # Na wypadek, gdy dodano nowy zasób należy przebudować wszystkie grupy
-    for v in lov:
-        # Komendę "xdel" można zastąpić komendą "reset_selective",
-        # która generuje prośbę o potwierdzenie.
-        get_ipython().run_line_magic('xdel', v)
-    lov.clear()
+    try:
+        for name in lon:
+            # Komendę "xdel" można zastąpić komendą "reset_selective",
+            # która generuje prośbę o potwierdzenie.
+            get_ipython().run_line_magic('xdel', name)
+    except AttributeError:
+        for name in lon:
+            delattr(interactive_namespace, name)
+    lon.clear()
 
     # "G": lista wszystkich grup dostępnych w zasobach, tworząca
     #      graf zwany lasem
@@ -189,10 +231,10 @@ def update():
         C = C - P
 
 
-# Dataset nie powinien posiadać atrybutów, gdyż nie będą one dostępne
-# poprzez tradycyjną notację.
 class Group:
+    """Contains low-level mechanisms for handling groups in HDF5.
 
+    """
     def __init__(self, group, parent=None):
         super().__setattr__('group', group)
         # Na poziomie zasobów hdf5 parent to 40 znakowy string. Na
@@ -241,57 +283,90 @@ class Group:
 
 
 class Variable(Group):
-
-    '''
-    Notes
-    ------
-    Each instance of the Variable class is paired with an associated
-    HDF5 *root group* and exposes convinient interface for it.
-
-    '''
+    """Each instance of the Variable class is paired with an associated
+    HDF5 *root group* and exposes convenient interface for it.
+    """
     def match(self):
-        return self.group.attrs['parent'] == fingerprint(self.parent)
-
-    def remove(self):
-        '''remove()
-        Removes associated HDF5 group.
-        Method called on specified variable in the workspace. 
+        """match()
+        
+        Checks whether parent of group associated with specified variable has been modified.
+        
+        Returns
+        -------
+        **bool**
+            True if there are no changes to parent of specified group, False otherwise.
         
         Examples
         ---------
-        Add example variable (named "E") to the HDF5 file with index = 0 in the workspace::
-    
-        >>> <workspace_name>[0].create.basic("E")
+        Add example variable (named ``var1``) to the HDF5 file with index = -1 on the list of files::
         
-        Remove "E", by calling remove() method on it::
+        >>> <interface_name>[-1].create.basic("var1")
         
-        >>> E.remove()
-        '''
+        In variable ``var1`` create dataset named ``dset1``, which contains some numerical data::
+        
+        >>> var1.data.dset1 = [1,2,3,4]
+        
+        Create second variable named ``var2``, as a children of ``var1``::
+        
+        >>> <interface_name>[-1].create.basic("var2",var1)
+        
+        As for now, if we call ``match()`` method on ``var2``, it will return True, as the ``var1`` is up-to-date::
+        
+        >>> var2.match()
+        
+        **True**
+        
+        If ``var1`` will be modified (i.e. by adding another dataset to it, named ``dset2``)::
+        
+        >>> var1.data.dset2 = [2,4,6,8]
+        
+        Then ``var1`` variable will not be up-to-date, and ``match()`` method called on ``var2`` will return false::
+        
+        >>> var2.match()
+        
+        **False**
+        """
+        return self.group.attrs['parent'] == fingerprint(self.parent)
 
+
+    def remove(self):        
+        """remove()
+
+        Removes variable from the interactive namespace and removes group paired with this variable from the HDF5 file.
+        
+        Examples
+        ---------
+        Add example variable (named ``var1``) to the HDF5 file with index = -1 on the list of files::
+        
+        >>> <interface_name>[-1].create.basic("var1")
+        
+        Remove ``var1``, by calling ``remove()`` method on it::
+        
+        >>> var1.remove()
+        """
         del(self.group.parent[self.group.name[1:]])
         update()
 
     def rename(self, name):
-        '''rename(name)
-        Renames associated HDF5 group.
-        Method called on specified variable in the workspace.
+        """rename(name)
+        Renames variable in the interactive namespace and HDF5 group associated to it.
         
         Parameters
         ----------
         name : str
             New name of the HDF5 group.
-    
+        
         Examples
         ---------
-        Add example variable (named "E") to the HDF5 file with index = 0 in the workspace::
-    
-        >>> <workspace_name>[0].create.basic("E")
+        Add example variable (named ``var1``) to the HDF5 file with index = -1 on the list of files::
         
-        Rename "E" to "Z", by calling rename() method on it::
+        >>> <interface_name>[0].create.basic("var1")
         
-        >>> E.rename("Z")
-        '''
-
+        Rename ``var1`` to ``var2``, by calling ``rename()`` method on it::
+        
+        >>> var1.rename("var2")
+        """
+        
         self.group.move(self.group.name, '/' + name)
         update()
 
