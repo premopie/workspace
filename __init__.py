@@ -9,7 +9,8 @@ Main features
 - Provides a set of tools for handling variables, i.e. objects being
   instances of the ``Variable`` class.
 
-- Variables are created by default in the ``__main__`` module.
+- Variables are created in the interactive namespace, which is by
+  default a current ``__main__`` module.
 
 - When running in IPython, variables are available through the
   interactive namespace.
