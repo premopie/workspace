@@ -1,3 +1,25 @@
+"""
+:Object: **variables**: List of all variables available in the interactive namespace.
+
+Instance of ``__init__.Variables``.
+
+:Object: **hdf5_files**: List of all HDF5 files available in the interactive namespace.
+
+Instance of ``__init__.HDF5Files``.
+
+:Object: **compression**: Dictionary that contains dataset compression parameters.
+
+Available parameters:
+
+- chunks (default = ``True``)
+
+- compression (default = ``lzf``)
+
+- shuffle (default = ``True``)
+
+Detailed information on dataset compression can be found in `h5py dataset documentation <http://docs.h5py.org/en/latest/high/dataset.html>`_.
+
+"""
 import datetime as _d
 import workspace as _w
 
@@ -7,7 +29,39 @@ compression = _w.compression
 
 
 def add(filename, mode='a'):
+    """
+    Creates or opens a HDF5 file on the hard drive and adds it to the interactive namespace.
+    
+    Parameters
+    ----------
+    filename : str
+        Name of the HDF5 file.
+    mode : str, optional
+        Mode in which to open file, one of ('r', 'r+', 'w', 'w-', 'x', 'a').
+        
+        +------------+----------------------------------------------------------+
+        | **r**      | Readonly, file must exist                                |
+        +------------+----------------------------------------------------------+
+        | **r+**     | Read/write, file must exist                              |
+        +------------+----------------------------------------------------------+
+        | **w**      | Create file, truncate if exists                          |
+        +------------+----------------------------------------------------------+
+        | **w- or x**| Create file, fail if exists                              |
+        +------------+----------------------------------------------------------+
+        | **a**      | Read/write if exists, create otherwise (**default**)     |
+        +------------+----------------------------------------------------------+
+        
+    Notes
+    ------
+    Based on ``h5py.File()``.
+    The root group is automatically created when the HDF5 file is created.
 
+    Examples
+    ---------
+    Add a sample file to the interactive namespace::
+    
+    >>> <interface_name>.add("example.h5")
+    """
     if mode == 'w':                                         
         mode == 'w-'
 
@@ -24,7 +78,21 @@ def add(filename, mode='a'):
 
 
 def clear():
+    """
+    Closes all open HDF5 files and removes them from the interactive namespace.
+    Files are not physically deleted form the hard drive, but rather deleted from current interactive namespace.
+    
+    Notes
+    ------
+    Based on ``h5py.File()``.
+    
 
+    Examples
+    ---------
+    Clears current interactive namespace::
+
+    >>> <interface_name>.clear()
+    """
     for f in _w.lof:
         f.close()
     _w.lof.clear()
@@ -33,19 +101,51 @@ def clear():
 
 def close(obj=-1):
     """close(obj=-1)
+    Closes HDF5 file with selected index and removes it from the interactive namespace.
+    The default index is minus one, which means the last item on the list of files.
+    
+    Notes
+    ------
+    Based on ``h5py.File()``.
+    
+    This method does not guarantee that the file will be correctly saved. To ensure no data corruption, ``api.flush()`` should be called before ``api.close()``.
 
-    Z przetsrzeni roboczej usuń wskazany plik HDF 5 (domyślnie osatnio
-    otwarty).
-
-    Z interaktywnej przestrzeni nazw ipython'a usuń wszystkie
-    dowiązania do obiektów z usuwanego zasobu i zamknij plik.
-
+    Examples
+    ---------
+    Add a sample file to the interactive namespace::
+    
+    >>> <interface_name>.add("example.h5")
+        
+    File *"example.h5"* is present in interactive namespace with index = -1. 
+    
+    In order to close this file and remove from the interactive namespace we need to call ``api.close()`` method on ``<interface_name>[file_index]`` file object:: 
+    
+    >>> <interface_name>[-1].close()
     """
     _w.lof.pop(_w.index(obj)).close()
     _w.update()
 
 
 def flush(obj=-1):
+    """flush(obj=-1)
+    Forces data in HDF5 file to be copied from the memory buffer and saved on the hard drive.
+    The default index is minus one, which means the last item on the list of files.
+    
+    Notes
+    ------
+    Based on ``h5py.File()``.
+    
+    Examples
+    ---------
+    Ensure that data from the selected HDF5 file is saved on the hard drive::
+    
+    >>> <interface_name>[file_index].flush()
+    
+    Close it::
+        
+    >>> <interface_name>[file_index].close()
+        
+    """
     _w.lof[_w.index(obj)].flush()
 
 
