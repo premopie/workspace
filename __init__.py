@@ -42,6 +42,9 @@ lon = []
 # Hidden attributes
 hidden_attributes = ['group', 'parent', 'create']
 
+# Compression settings
+compression = {'chunks': True, 'compression': "lzf", 'shuffle': True}
+
 
 class HDF5Files:
     """
@@ -242,7 +245,9 @@ class Group:
         elif name in self.group:
             self.group[name] = value
         else:
-            self.group.create_dataset(name, data=value)
+            for key in compression:
+                print('klucz={}, wartosc={}'.format(key, compression[key]))
+            self.group.create_dataset(name, data=value, **compression)
 
     def __repr__(self):
         if isinstance(self, Variable):

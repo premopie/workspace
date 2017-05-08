@@ -3,6 +3,7 @@ import workspace as _w
 
 hdf5_files = _w.HDF5Files()
 variables = _w.Variables()
+compression = _w.compression
 
 
 def add(filename, mode='a'):

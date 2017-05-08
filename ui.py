@@ -32,7 +32,8 @@ class HDF5File:
 class Interface:
 
     vars = workspace.api.variables
-
+    compression = workspace.api.compression
+    
     def __repr__(self):
         return repr(workspace.api.hdf5_files)
 
